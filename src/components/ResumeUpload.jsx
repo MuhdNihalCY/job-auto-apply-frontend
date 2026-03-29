@@ -11,7 +11,7 @@ export default function ResumeUpload() {
       .from("app_settings")
       .select("value")
       .eq("key", "resume_url")
-      .single()
+      .maybeSingle()
       .then(({ data }) => {
         if (data?.value) setUrl(data.value);
       });
