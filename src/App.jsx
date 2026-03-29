@@ -6,6 +6,7 @@ import AddJobModal from "./components/AddJobModal.jsx";
 import EditJobModal from "./components/EditJobModal.jsx";
 import RunNowButton from "./components/RunNowButton.jsx";
 import SyncNowButton from "./components/SyncNowButton.jsx";
+import TestEmailModal from "./components/TestEmailModal.jsx";
 import ResumeUpload from "./components/ResumeUpload.jsx";
 import SettingsPanel from "./components/SettingsPanel.jsx";
 
@@ -16,6 +17,7 @@ export default function App() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [showAdd, setShowAdd] = useState(false);
   const [editJob, setEditJob] = useState(null);
+  const [showTestEmail, setShowTestEmail] = useState(false);
 
   function refresh() {
     setRefreshKey((k) => k + 1);
@@ -49,6 +51,12 @@ export default function App() {
             <div className="flex items-center gap-2">
               <SyncNowButton onRefresh={refresh} />
               <RunNowButton onRefresh={refresh} />
+              <button
+                onClick={() => setShowTestEmail(true)}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors"
+              >
+                Test Email
+              </button>
               <button
                 onClick={() => setShowAdd(true)}
                 className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
@@ -94,6 +102,9 @@ export default function App() {
           onClose={() => setEditJob(null)}
           onSaved={refresh}
         />
+      )}
+      {showTestEmail && (
+        <TestEmailModal onClose={() => setShowTestEmail(false)} />
       )}
     </div>
   );
