@@ -94,10 +94,10 @@ export default function TestEmailModal({ onClose }) {
                 [TEST] Application for {selected.role} at {selected.company_name}
               </p>
               <p className="text-xs font-medium text-gray-500 mt-2">Body preview</p>
-              <p className="text-xs text-gray-600 leading-relaxed line-clamp-4">
-                {selected.personalized_email?.slice(0, 300)}
-                {selected.personalized_email?.length > 300 ? "…" : ""}
-              </p>
+              <pre className="text-xs text-gray-600 leading-relaxed whitespace-pre-wrap font-sans line-clamp-6">
+                {selected.personalized_email?.slice(0, 400)}
+                {selected.personalized_email?.length > 400 ? "…" : ""}
+              </pre>
             </div>
           )}
 
