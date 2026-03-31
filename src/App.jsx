@@ -72,7 +72,7 @@ export default function App() {
         {tab === "Dashboard" && (
           <>
             <StatsBar refreshKey={refreshKey} />
-            <QueuePanel refreshKey={refreshKey} />
+            <QueuePanel refreshKey={refreshKey} onRefresh={refresh} />
             <JobTable
               refreshKey={refreshKey}
               onEdit={(job) => setEditJob(job)}

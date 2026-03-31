@@ -13,6 +13,7 @@ export default function EditJobModal({ job, onClose, onSaved }) {
     key_skills: job.key_skills ?? "",
     exp_required: job.exp_required ?? "",
     personalized_email: job.personalized_email ?? "",
+    custom_subject: job.custom_subject ?? "",
     send_status: job.send_status ?? "Pending",
   });
   const [saving, setSaving] = useState(false);
@@ -38,6 +39,7 @@ export default function EditJobModal({ job, onClose, onSaved }) {
         key_skills: form.key_skills.trim() || null,
         exp_required: form.exp_required.trim() || null,
         personalized_email: form.personalized_email.trim() || null,
+        custom_subject: form.custom_subject.trim() || null,
         send_status: form.send_status,
         updated_at: new Date().toISOString(),
       })
@@ -58,13 +60,23 @@ export default function EditJobModal({ job, onClose, onSaved }) {
       <JobForm form={form} set={set} editMode />
       {/* Status dropdown extended for edit mode */}
       <div className="mt-3">
+        <label className="block text-xs font-medium text-gray-600 mb-1">Custom Subject (optional)</label>
+        <input
+          type="text"
+          value={form.custom_subject}
+          onChange={(e) => set("custom_subject", e.target.value)}
+          placeholder="Leave blank to use auto-generated subject"
+          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      </div>
+      <div className="mt-3">
         <label className="block text-xs font-medium text-gray-600 mb-1">Send Status (override)</label>
         <select
           value={form.send_status}
           onChange={(e) => set("send_status", e.target.value)}
           className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
-          {["Pending", "Queued", "Sent", "Failed", "Skip"].map((s) => (
+          {["Pending", "Queued", "Sent", "Failed", "Skip", "Replied", "Interview", "Offer", "Rejected"].map((s) => (
             <option key={s} value={s}>{s}</option>
           ))}
         </select>

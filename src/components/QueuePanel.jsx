@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase.js";
+import toast from "react-hot-toast";
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
 
 const statusStyle = {
   queued: "bg-blue-100 text-blue-700",
@@ -16,9 +19,25 @@ function formatTime(iso) {
   });
 }
 
-export default function QueuePanel({ refreshKey }) {
+export default function QueuePanel({ refreshKey, onRefresh }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [retrying, setRetrying] = useState(null);
+
+  async function retry(jobId) {
+    setRetrying(jobId);
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/retry/${jobId}`, { method: "POST" });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error);
+      toast.success("Job reset to Pending — will be scheduled on next Run Now");
+      onRefresh?.();
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setRetrying(null);
+    }
+  }
 
   useEffect(() => {
     async function load() {
@@ -86,6 +105,15 @@ export default function QueuePanel({ refreshKey }) {
                 >
                   {item.status}
                 </span>
+                {item.status === "failed" && (
+                  <button
+                    onClick={() => retry(item.job_applications?.id)}
+                    disabled={retrying === item.job_applications?.id}
+                    className="text-xs px-2 py-0.5 rounded border border-gray-200 hover:bg-gray-50 text-gray-500 disabled:opacity-50"
+                  >
+                    {retrying === item.job_applications?.id ? "…" : "Retry"}
+                  </button>
+                )}
               </div>
             </li>
           );

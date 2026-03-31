@@ -14,6 +14,11 @@ const ALL_SETTING_KEYS = [
   "daily_email_limit",
   "delay_min_minutes",
   "delay_max_minutes",
+  "send_hour",
+  "cc_self",
+  "followup_enabled",
+  "followup_after_days",
+  "followup_template",
   "from_name",
   "from_email",
   "email_provider",
@@ -283,7 +288,14 @@ export default function SettingsPanel() {
         {/* Sending Rules Tab */}
         {activeTab === "rules" && (
           <>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
+              <Sfield
+                label="Send Hour (IST, 24h)"
+                value={settings["send_hour"] ?? "10"}
+                onChange={(v) => set("send_hour", v)}
+                type="number"
+                hint="Hour to send emails (0–23). Default: 10 = 10 AM"
+              />
               <Sfield
                 label="Daily Email Limit"
                 value={settings["daily_email_limit"] ?? "5"}
@@ -291,6 +303,8 @@ export default function SettingsPanel() {
                 type="number"
                 hint="Max emails per day (1–20)"
               />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
               <Sfield
                 label="Min Delay (minutes)"
                 value={settings["delay_min_minutes"] ?? "7"}
@@ -306,20 +320,69 @@ export default function SettingsPanel() {
                 hint="Maximum gap between sends"
               />
             </div>
-            <div className="pt-1">
-              <p className="text-xs text-gray-400">
-                Example with 5 emails, 7–12 min gaps: sends from 10:00 AM to ~10:45 AM IST
-              </p>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="cc_self"
+                checked={settings["cc_self"] !== "false"}
+                onChange={(e) => set("cc_self", e.target.checked ? "true" : "false")}
+                className="rounded"
+              />
+              <label htmlFor="cc_self" className="text-sm text-gray-600">
+                CC myself on every sent email
+              </label>
             </div>
             <button
-              onClick={() =>
-                save(["daily_email_limit", "delay_min_minutes", "delay_max_minutes"])
-              }
+              onClick={() => save(["daily_email_limit", "delay_min_minutes", "delay_max_minutes", "send_hour", "cc_self"])}
               disabled={saving}
               className="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
             >
               {saving ? "Saving…" : "Save Rules"}
             </button>
+
+            {/* Follow-up settings */}
+            <div className="border-t border-gray-100 pt-4 space-y-3">
+              <p className="text-xs font-semibold text-gray-700">Follow-up Emails</p>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="followup_enabled"
+                  checked={settings["followup_enabled"] === "true"}
+                  onChange={(e) => set("followup_enabled", e.target.checked ? "true" : "false")}
+                  className="rounded"
+                />
+                <label htmlFor="followup_enabled" className="text-sm text-gray-600">
+                  Enable automatic follow-up emails
+                </label>
+              </div>
+              <Sfield
+                label="Follow up after (days)"
+                value={settings["followup_after_days"] ?? "5"}
+                onChange={(v) => set("followup_after_days", v)}
+                type="number"
+                hint="Send follow-up X days after initial application (if no reply)"
+              />
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">
+                  Follow-up email template
+                </label>
+                <textarea
+                  value={settings["followup_template"] ?? ""}
+                  onChange={(e) => set("followup_template", e.target.value)}
+                  rows={5}
+                  placeholder="Leave blank to use default template. Use {role}, {company}, {name} as placeholders."
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                />
+                <p className="text-xs text-gray-400 mt-1">Placeholders: {"{role}"}, {"{company}"}, {"{name}"}</p>
+              </div>
+              <button
+                onClick={() => save(["followup_enabled", "followup_after_days", "followup_template"])}
+                disabled={saving}
+                className="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                {saving ? "Saving…" : "Save Follow-up Settings"}
+              </button>
+            </div>
           </>
         )}
 
