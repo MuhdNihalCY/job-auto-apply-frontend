@@ -85,35 +85,37 @@ export default function QueuePanel({ refreshKey, onRefresh }) {
         {items.map((item) => {
           const job = item.job_applications;
           return (
-            <li key={item.id} className="px-4 py-3 flex items-center justify-between gap-2">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-800 truncate">
-                  {job?.company_name} — {job?.role}
-                </p>
-                <p className="text-xs text-gray-500 truncate">{job?.apply_email}</p>
-              </div>
-              <div className="flex items-center gap-3 flex-shrink-0">
-                <span className="text-xs text-gray-500">
-                  {item.status === "sent"
-                    ? `Sent at ${formatTime(item.sent_at)}`
-                    : `Scheduled ${formatTime(item.scheduled_at)} IST`}
-                </span>
-                <span
-                  className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${
-                    statusStyle[item.status] ?? "bg-gray-100 text-gray-600"
-                  }`}
-                >
-                  {item.status}
-                </span>
-                {item.status === "failed" && (
-                  <button
-                    onClick={() => retry(item.job_applications?.id)}
-                    disabled={retrying === item.job_applications?.id}
-                    className="text-xs px-2 py-0.5 rounded border border-gray-200 hover:bg-gray-50 text-gray-500 disabled:opacity-50"
+            <li key={item.id} className="px-4 py-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-800 truncate">
+                    {job?.company_name} — {job?.role}
+                  </p>
+                  <p className="text-xs text-gray-500 truncate mt-0.5">{job?.apply_email}</p>
+                </div>
+                <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${
+                      statusStyle[item.status] ?? "bg-gray-100 text-gray-600"
+                    }`}
                   >
-                    {retrying === item.job_applications?.id ? "…" : "Retry"}
-                  </button>
-                )}
+                    {item.status}
+                  </span>
+                  <span className="text-xs text-gray-400">
+                    {item.status === "sent"
+                      ? `Sent ${formatTime(item.sent_at)}`
+                      : `@ ${formatTime(item.scheduled_at)} IST`}
+                  </span>
+                  {item.status === "failed" && (
+                    <button
+                      onClick={() => retry(item.job_applications?.id)}
+                      disabled={retrying === item.job_applications?.id}
+                      className="text-xs px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 text-gray-500 disabled:opacity-50"
+                    >
+                      {retrying === item.job_applications?.id ? "…" : "Retry"}
+                    </button>
+                  )}
+                </div>
               </div>
             </li>
           );

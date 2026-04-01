@@ -3,7 +3,7 @@ import toast from "react-hot-toast";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
-export default function RunNowButton({ onRefresh }) {
+export default function RunNowButton({ onRefresh, compact = false }) {
   const [loading, setLoading] = useState(false);
 
   async function run() {
@@ -39,20 +39,22 @@ export default function RunNowButton({ onRefresh }) {
     <button
       onClick={run}
       disabled={loading}
-      className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium rounded-lg transition-colors"
+      className={`flex-shrink-0 flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white font-medium rounded-lg transition-colors ${
+        compact ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-sm"
+      }`}
     >
       {loading ? (
         <>
-          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+          <svg className="animate-spin h-3.5 w-3.5" viewBox="0 0 24 24" fill="none">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
           </svg>
-          Scheduling…
+          {compact ? "Running…" : "Scheduling…"}
         </>
       ) : (
         <>
           <span>⚡</span>
-          Schedule &amp; Send Now
+          {compact ? "Run Now" : "Schedule & Send Now"}
         </>
       )}
     </button>

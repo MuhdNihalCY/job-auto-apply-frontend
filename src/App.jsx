@@ -27,39 +27,63 @@ export default function App() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <h1 className="text-base font-bold text-gray-900">✉️ Job Mailer</h1>
-            <nav className="flex gap-1">
-              {TABS.map((t) => (
+        <div className="max-w-6xl mx-auto px-4">
+          {/* Top row: logo + tabs */}
+          <div className="flex items-center justify-between py-3">
+            <div className="flex items-center gap-3">
+              <h1 className="text-base font-bold text-gray-900 whitespace-nowrap">✉️ Job Mailer</h1>
+              <nav className="flex gap-1">
+                {TABS.map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setTab(t)}
+                    className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
+                      tab === t
+                        ? "bg-blue-50 text-blue-700"
+                        : "text-gray-600 hover:bg-gray-100"
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </nav>
+            </div>
+
+            {/* Desktop action buttons */}
+            {tab === "Dashboard" && (
+              <div className="hidden sm:flex items-center gap-2">
+                <SyncNowButton onRefresh={refresh} />
+                <RunNowButton onRefresh={refresh} />
                 <button
-                  key={t}
-                  onClick={() => setTab(t)}
-                  className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
-                    tab === t
-                      ? "bg-blue-50 text-blue-700"
-                      : "text-gray-600 hover:bg-gray-100"
-                  }`}
+                  onClick={() => setShowTestEmail(true)}
+                  className="px-3 py-2 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors"
                 >
-                  {t}
+                  Test Email
                 </button>
-              ))}
-            </nav>
+                <button
+                  onClick={() => setShowAdd(true)}
+                  className="px-3 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
+                >
+                  + Add Job
+                </button>
+              </div>
+            )}
           </div>
 
+          {/* Mobile action buttons row */}
           {tab === "Dashboard" && (
-            <div className="flex items-center gap-2">
-              <SyncNowButton onRefresh={refresh} />
-              <RunNowButton onRefresh={refresh} />
+            <div className="sm:hidden flex items-center gap-2 pb-3 overflow-x-auto scrollbar-hide">
+              <SyncNowButton onRefresh={refresh} compact />
+              <RunNowButton onRefresh={refresh} compact />
               <button
                 onClick={() => setShowTestEmail(true)}
-                className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors"
+                className="flex-shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors"
               >
                 Test Email
               </button>
               <button
                 onClick={() => setShowAdd(true)}
-                className="px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
+                className="flex-shrink-0 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg hover:bg-gray-800 transition-colors"
               >
                 + Add Job
               </button>
@@ -68,7 +92,7 @@ export default function App() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-6">
+      <main className="max-w-6xl mx-auto px-4 py-4 sm:py-6">
         {tab === "Dashboard" && (
           <>
             <StatsBar refreshKey={refreshKey} />
@@ -91,10 +115,7 @@ export default function App() {
 
       {/* Modals */}
       {showAdd && (
-        <AddJobModal
-          onClose={() => setShowAdd(false)}
-          onSaved={refresh}
-        />
+        <AddJobModal onClose={() => setShowAdd(false)} onSaved={refresh} />
       )}
       {editJob && (
         <EditJobModal

@@ -74,15 +74,15 @@ export default function AddJobModal({ onClose, onSaved }) {
 export function JobForm({ form, set }) {
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Field label="Company Name *" value={form.company_name} onChange={(v) => set("company_name", v)} />
         <Field label="Role / Job Title *" value={form.role} onChange={(v) => set("role", v)} />
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Field label="Apply Email" value={form.apply_email} onChange={(v) => set("apply_email", v)} type="email" />
         <Field label="Career Page / Job URL" value={form.career_url} onChange={(v) => set("career_url", v)} />
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Field label="Key Skills" value={form.key_skills} onChange={(v) => set("key_skills", v)} />
         <Field label="Exp Required" value={form.exp_required} onChange={(v) => set("exp_required", v)} />
       </div>
@@ -144,18 +144,18 @@ export function Field({ label, value, onChange, type = "text", multiline = false
 
 export function Modal({ title, onClose, children }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40">
+      <div className="bg-white w-full sm:rounded-2xl sm:max-w-2xl sm:mx-4 rounded-t-2xl shadow-2xl max-h-[92dvh] flex flex-col">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
+          <h2 className="text-base font-semibold text-gray-900">{title}</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 text-xl font-light leading-none"
+            className="text-gray-400 hover:text-gray-600 text-xl font-light leading-none p-1"
           >
             ✕
           </button>
         </div>
-        <div className="px-6 py-5">{children}</div>
+        <div className="px-5 py-4 overflow-y-auto flex-1">{children}</div>
       </div>
     </div>
   );

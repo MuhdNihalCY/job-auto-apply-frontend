@@ -131,13 +131,13 @@ export default function SettingsPanel() {
 
   return (
     <div className="bg-white rounded-xl border border-gray-200">
-      {/* Tabs */}
-      <div className="flex border-b border-gray-100">
+      {/* Tabs — scrollable on mobile */}
+      <div className="flex border-b border-gray-100 overflow-x-auto scrollbar-hide">
         {tabs.map((t) => (
           <button
             key={t.key}
             onClick={() => setActiveTab(t.key)}
-            className={`px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
+            className={`flex-shrink-0 px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
               activeTab === t.key
                 ? "border-blue-600 text-blue-600"
                 : "border-transparent text-gray-500 hover:text-gray-700"
@@ -152,7 +152,7 @@ export default function SettingsPanel() {
         {/* Email Provider Tab */}
         {activeTab === "provider" && (
           <>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Sfield
                 label="From Name"
                 value={settings["from_name"] ?? ""}
@@ -186,7 +186,7 @@ export default function SettingsPanel() {
             {(provider === "gmail" || provider === "smtp") && (
               <>
                 {provider === "smtp" && (
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-3 sm:grid-cols-3 gap-3">
                     <div className="col-span-2">
                       <Sfield
                         label="SMTP Host"
@@ -218,7 +218,7 @@ export default function SettingsPanel() {
                     </label>
                   </div>
                 )}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <Sfield
                     label={provider === "gmail" ? "Gmail Address" : "SMTP Username"}
                     value={settings["smtp_user"] ?? ""}
@@ -288,7 +288,7 @@ export default function SettingsPanel() {
         {/* Sending Rules Tab */}
         {activeTab === "rules" && (
           <>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Sfield
                 label="Send Hour (IST, 24h)"
                 value={settings["send_hour"] ?? "10"}
@@ -304,7 +304,7 @@ export default function SettingsPanel() {
                 hint="Max emails per day (1–20)"
               />
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Sfield
                 label="Min Delay (minutes)"
                 value={settings["delay_min_minutes"] ?? "7"}
