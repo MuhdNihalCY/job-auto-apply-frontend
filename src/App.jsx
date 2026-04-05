@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import StatsBar from "./components/StatsBar.jsx";
 import QueuePanel from "./components/QueuePanel.jsx";
 import JobTable from "./components/JobTable.jsx";
@@ -9,11 +9,25 @@ import SyncNowButton from "./components/SyncNowButton.jsx";
 import TestEmailModal from "./components/TestEmailModal.jsx";
 import ResumeUpload from "./components/ResumeUpload.jsx";
 import SettingsPanel from "./components/SettingsPanel.jsx";
+import LoginPage from "./components/LoginPage.jsx";
+import { supabase } from "./lib/supabase.js";
 
 const TABS = ["Dashboard", "Settings"];
 
 export default function App() {
+  const [session, setSession] = useState(undefined);
   const [tab, setTab] = useState("Dashboard");
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  if (session === undefined) return null; // loading
+  if (session === null) return <LoginPage />;
   const [refreshKey, setRefreshKey] = useState(0);
   const [showAdd, setShowAdd] = useState(false);
   const [editJob, setEditJob] = useState(null);
@@ -50,24 +64,32 @@ export default function App() {
             </div>
 
             {/* Desktop action buttons */}
-            {tab === "Dashboard" && (
-              <div className="hidden sm:flex items-center gap-2">
-                <SyncNowButton onRefresh={refresh} />
-                <RunNowButton onRefresh={refresh} />
-                <button
-                  onClick={() => setShowTestEmail(true)}
-                  className="px-3 py-2 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors"
-                >
-                  Test Email
-                </button>
-                <button
-                  onClick={() => setShowAdd(true)}
-                  className="px-3 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
-                >
-                  + Add Job
-                </button>
-              </div>
-            )}
+            <div className="hidden sm:flex items-center gap-2">
+              {tab === "Dashboard" && (
+                <>
+                  <SyncNowButton onRefresh={refresh} />
+                  <RunNowButton onRefresh={refresh} />
+                  <button
+                    onClick={() => setShowTestEmail(true)}
+                    className="px-3 py-2 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors"
+                  >
+                    Test Email
+                  </button>
+                  <button
+                    onClick={() => setShowAdd(true)}
+                    className="px-3 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
+                  >
+                    + Add Job
+                  </button>
+                </>
+              )}
+              <button
+                onClick={() => supabase.auth.signOut()}
+                className="px-3 py-2 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-500 transition-colors"
+              >
+                Logout
+              </button>
+            </div>
           </div>
 
           {/* Mobile action buttons row */}
