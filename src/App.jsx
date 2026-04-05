@@ -18,6 +18,11 @@ export default function App() {
   const [session, setSession] = useState(undefined);
   const [tab, setTab] = useState("Dashboard");
 
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [showAdd, setShowAdd] = useState(false);
+  const [editJob, setEditJob] = useState(null);
+  const [showTestEmail, setShowTestEmail] = useState(false);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -28,10 +33,6 @@ export default function App() {
 
   if (session === undefined) return null; // loading
   if (session === null) return <LoginPage />;
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [showAdd, setShowAdd] = useState(false);
-  const [editJob, setEditJob] = useState(null);
-  const [showTestEmail, setShowTestEmail] = useState(false);
 
   function refresh() {
     setRefreshKey((k) => k + 1);
