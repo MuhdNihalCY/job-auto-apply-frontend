@@ -1,12 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase.js";
-
-const STATS = [
-  { label: "Total", key: "total", color: "bg-blue-50 border-blue-200 text-blue-700" },
-  { label: "Sent", key: "sent", color: "bg-green-50 border-green-200 text-green-700" },
-  { label: "Queued / Pending", key: "pending", color: "bg-yellow-50 border-yellow-200 text-yellow-700" },
-  { label: "Failed", key: "failed", color: "bg-red-50 border-red-200 text-red-700" },
-];
+import Tooltip from "./Tooltip.jsx";
 
 export default function StatsBar({ refreshKey }) {
   const [counts, setCounts] = useState({ total: 0, sent: 0, pending: 0, failed: 0 });
@@ -15,36 +9,38 @@ export default function StatsBar({ refreshKey }) {
   useEffect(() => {
     async function loadStats() {
       setLoading(true);
-      const { data } = await supabase
-        .from("job_applications")
-        .select("send_status");
-
+      const { data } = await supabase.from("job_applications").select("send_status");
       if (data) {
-        const total = data.length;
-        const sent = data.filter((r) => r.send_status === "Sent").length;
-        const pending = data.filter((r) =>
-          ["Pending", "Queued"].includes(r.send_status)
-        ).length;
-        const failed = data.filter((r) => r.send_status === "Failed").length;
-        setCounts({ total, sent, pending, failed });
+        setCounts({
+          total:   data.length,
+          sent:    data.filter((r) => r.send_status === "Sent").length,
+          pending: data.filter((r) => ["Pending", "Queued"].includes(r.send_status)).length,
+          failed:  data.filter((r) => r.send_status === "Failed").length,
+        });
       }
       setLoading(false);
     }
     loadStats();
   }, [refreshKey]);
 
+  const stats = [
+    { label: "Total",   key: "total",   num: "text-gray-700",   tip: "All job applications in the database" },
+    { label: "Sent",    key: "sent",    num: "text-green-600",  tip: "Emails successfully delivered" },
+    { label: "Pending", key: "pending", num: "text-yellow-600", tip: "Jobs waiting to be scheduled or queued" },
+    { label: "Failed",  key: "failed",  num: "text-red-500",    tip: "Emails that failed to send — check the queue for details" },
+  ];
+
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-      {STATS.map(({ label, key, color }) => (
-        <div
-          key={key}
-          className={`rounded-xl border p-4 flex flex-col items-center justify-center ${color}`}
-        >
-          <span className="text-3xl font-bold">
-            {loading ? "—" : counts[key]}
-          </span>
-          <span className="text-sm font-medium mt-1">{label}</span>
-        </div>
+    <div className="flex items-center gap-0 bg-white border border-gray-200 rounded-xl mb-3 divide-x divide-gray-100 overflow-hidden">
+      {stats.map(({ label, key, num, tip }) => (
+        <Tooltip key={key} text={tip} position="bottom">
+          <div className="flex-1 flex flex-col items-center py-2.5 px-1 cursor-default">
+            <span className={`text-lg font-bold leading-none ${num}`}>
+              {loading ? "—" : counts[key]}
+            </span>
+            <span className="text-[10px] text-gray-400 mt-0.5 uppercase tracking-wide font-medium">{label}</span>
+          </div>
+        </Tooltip>
       ))}
     </div>
   );

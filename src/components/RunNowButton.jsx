@@ -1,5 +1,6 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
+import Tooltip from "./Tooltip.jsx";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const ANON_KEY    = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -41,6 +42,7 @@ export default function RunNowButton({ onRefresh, compact = false }) {
   }
 
   return (
+    <Tooltip text="Schedule pending jobs and queue them to send — first email goes out within 5 minutes" position="bottom">
     <button
       onClick={run}
       disabled={loading}
@@ -63,5 +65,6 @@ export default function RunNowButton({ onRefresh, compact = false }) {
         </>
       )}
     </button>
+    </Tooltip>
   );
 }

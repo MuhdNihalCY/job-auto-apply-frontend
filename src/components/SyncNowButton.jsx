@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase.js";
 import toast from "react-hot-toast";
+import Tooltip from "./Tooltip.jsx";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const ANON_KEY    = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -46,20 +47,22 @@ export default function SyncNowButton({ onRefresh, compact = false }) {
 
   if (!sheetsEnabled) {
     return (
-      <button
-        disabled
-        title="Sheets sync is disabled — enable it in Settings → Sync"
-        className={`flex-shrink-0 flex items-center gap-1.5 bg-gray-50 opacity-40 cursor-not-allowed text-gray-400 font-medium rounded-lg border border-gray-200 ${
-          compact ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-sm"
-        }`}
-      >
-        <span>🔄</span>
-        {compact ? "Sync" : "Sync from Sheets"}
-      </button>
+      <Tooltip text="Google Sheets sync is disabled — enable it in Settings → Sync" position="bottom">
+        <button
+          disabled
+          className={`flex-shrink-0 flex items-center gap-1.5 bg-gray-50 opacity-40 cursor-not-allowed text-gray-400 font-medium rounded-lg border border-gray-200 ${
+            compact ? "px-3 py-1.5 text-xs" : "px-4 py-2 text-sm"
+          }`}
+        >
+          <span>🔄</span>
+          {compact ? "Sync" : "Sync from Sheets"}
+        </button>
+      </Tooltip>
     );
   }
 
   return (
+    <Tooltip text="Pull latest job entries from your Google Sheet into the database" position="bottom">
     <button
       onClick={sync}
       disabled={loading}
@@ -82,5 +85,6 @@ export default function SyncNowButton({ onRefresh, compact = false }) {
         </>
       )}
     </button>
+    </Tooltip>
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { supabase } from "../lib/supabase.js";
 import toast from "react-hot-toast";
+import Tooltip from "./Tooltip.jsx";
 
 const statusBadge = {
   Pending:   "bg-yellow-100 text-yellow-700 border-yellow-200",
@@ -105,9 +106,9 @@ export default function JobTable({ refreshKey, onEdit, onRefresh }) {
   const term = search.trim();
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200">
+    <div className="bg-white rounded-xl border border-gray-200 flex flex-col h-full min-h-0">
       {/* Toolbar */}
-      <div className="px-3 py-2.5 border-b border-gray-100 space-y-2">
+      <div className="flex-shrink-0 px-3 py-2.5 border-b border-gray-100 space-y-2">
         <div className="flex gap-2">
           <input
             type="text"
@@ -117,10 +118,12 @@ export default function JobTable({ refreshKey, onEdit, onRefresh }) {
             className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           {search && (
-            <button
-              onClick={() => setSearch("")}
-              className="px-2 text-gray-400 hover:text-gray-600 text-sm"
-            >✕</button>
+            <Tooltip text="Clear search">
+              <button
+                onClick={() => setSearch("")}
+                className="px-2 text-gray-400 hover:text-gray-600 text-sm"
+              >✕</button>
+            </Tooltip>
           )}
         </div>
         <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-hide">
@@ -141,25 +144,27 @@ export default function JobTable({ refreshKey, onEdit, onRefresh }) {
             );
           })}
           {dupeCount > 0 && (
-            <button
-              onClick={() => { setShowDupes((v) => !v); setFilterStatus("All"); }}
-              className={`flex-shrink-0 text-xs px-2.5 py-0.5 rounded-full border font-medium transition-colors ${
-                showDupes
-                  ? "bg-orange-500 text-white border-orange-500"
-                  : "bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100"
-              }`}
-            >
-              ⚠ Dupes {dupeCount}
-            </button>
+            <Tooltip text={`${dupeCount} jobs share the same email address — click to filter and review`}>
+              <button
+                onClick={() => { setShowDupes((v) => !v); setFilterStatus("All"); }}
+                className={`flex-shrink-0 text-xs px-2.5 py-0.5 rounded-full border font-medium transition-colors ${
+                  showDupes
+                    ? "bg-orange-500 text-white border-orange-500"
+                    : "bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100"
+                }`}
+              >
+                ⚠ Dupes {dupeCount}
+              </button>
+            </Tooltip>
           )}
         </div>
       </div>
 
       {/* Table — desktop */}
-      <div className="hidden sm:block overflow-x-auto">
+      <div className="hidden sm:flex flex-col flex-1 overflow-auto min-h-0">
         <table className="w-full">
           <thead>
-            <tr className="border-b border-gray-100 text-xs text-gray-400 uppercase tracking-wide">
+            <tr className="border-b border-gray-100 text-xs text-gray-400 uppercase tracking-wide sticky top-0 bg-white z-10">
               <th className="px-3 py-2 text-left w-8">#</th>
               <th className="px-3 py-2 text-left">Company / Role</th>
               <th className="px-3 py-2 text-left">Email</th>
@@ -211,30 +216,35 @@ export default function JobTable({ refreshKey, onEdit, onRefresh }) {
                     </td>
                     <td className="px-3 py-1.5">
                       <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => onEdit(job)}
-                          className="text-xs px-2 py-0.5 rounded border border-gray-200 hover:bg-gray-100 text-gray-600"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => quickSkip(job)}
-                          disabled={skipping === job.id}
-                          title={isSkipped ? "Unskip (set Pending)" : "Temp skip this job"}
-                          className={`text-xs px-2 py-0.5 rounded border font-medium transition-colors ${
-                            isSkipped
-                              ? "border-yellow-200 text-yellow-600 hover:bg-yellow-50"
-                              : "border-gray-200 text-gray-400 hover:bg-gray-50 hover:text-orange-500 hover:border-orange-200"
-                          }`}
-                        >
-                          {skipping === job.id ? "…" : isSkipped ? "↩" : "Skip"}
-                        </button>
-                        <button
-                          onClick={() => deleteJob(job.id)}
-                          className="text-xs px-2 py-0.5 rounded border border-transparent hover:border-red-100 hover:bg-red-50 text-gray-300 hover:text-red-400"
-                        >
-                          ✕
-                        </button>
+                        <Tooltip text="Edit job details, email body, and status">
+                          <button
+                            onClick={() => onEdit(job)}
+                            className="text-xs px-2 py-0.5 rounded border border-gray-200 hover:bg-gray-100 text-gray-600"
+                          >
+                            Edit
+                          </button>
+                        </Tooltip>
+                        <Tooltip text={isSkipped ? "Restore to Pending — include in next schedule" : "Temporarily skip — won't be scheduled"}>
+                          <button
+                            onClick={() => quickSkip(job)}
+                            disabled={skipping === job.id}
+                            className={`text-xs px-2 py-0.5 rounded border font-medium transition-colors ${
+                              isSkipped
+                                ? "border-yellow-200 text-yellow-600 hover:bg-yellow-50"
+                                : "border-gray-200 text-gray-400 hover:bg-gray-50 hover:text-orange-500 hover:border-orange-200"
+                            }`}
+                          >
+                            {skipping === job.id ? "…" : isSkipped ? "↩" : "Skip"}
+                          </button>
+                        </Tooltip>
+                        <Tooltip text="Permanently delete this job application">
+                          <button
+                            onClick={() => deleteJob(job.id)}
+                            className="text-xs px-2 py-0.5 rounded border border-transparent hover:border-red-100 hover:bg-red-50 text-gray-300 hover:text-red-400"
+                          >
+                            ✕
+                          </button>
+                        </Tooltip>
                       </div>
                     </td>
                   </tr>
@@ -246,7 +256,7 @@ export default function JobTable({ refreshKey, onEdit, onRefresh }) {
       </div>
 
       {/* Mobile: compact cards */}
-      <div className="sm:hidden divide-y divide-gray-50">
+      <div className="sm:hidden flex-1 overflow-y-auto divide-y divide-gray-50">
         {loading ? (
           <div className="p-8 text-center text-sm text-gray-400">Loading…</div>
         ) : filtered.length === 0 ? (
@@ -276,15 +286,21 @@ export default function JobTable({ refreshKey, onEdit, onRefresh }) {
                       {job.send_status || "—"}
                     </span>
                     <div className="flex gap-1">
-                      <button onClick={() => onEdit(job)} className="text-xs px-2 py-0.5 rounded border border-gray-200 text-gray-600">Edit</button>
-                      <button
-                        onClick={() => quickSkip(job)}
-                        disabled={skipping === job.id}
-                        className={`text-xs px-2 py-0.5 rounded border ${isSkipped ? "border-yellow-200 text-yellow-600" : "border-gray-200 text-gray-400"}`}
-                      >
-                        {skipping === job.id ? "…" : isSkipped ? "↩" : "Skip"}
-                      </button>
-                      <button onClick={() => deleteJob(job.id)} className="text-xs px-2 py-0.5 rounded border border-transparent text-gray-300 hover:text-red-400">✕</button>
+                      <Tooltip text="Edit job details and email body" position="bottom">
+                        <button onClick={() => onEdit(job)} className="text-xs px-2 py-0.5 rounded border border-gray-200 text-gray-600">Edit</button>
+                      </Tooltip>
+                      <Tooltip text={isSkipped ? "Restore to Pending" : "Skip — won't be scheduled"} position="bottom">
+                        <button
+                          onClick={() => quickSkip(job)}
+                          disabled={skipping === job.id}
+                          className={`text-xs px-2 py-0.5 rounded border ${isSkipped ? "border-yellow-200 text-yellow-600" : "border-gray-200 text-gray-400"}`}
+                        >
+                          {skipping === job.id ? "…" : isSkipped ? "↩" : "Skip"}
+                        </button>
+                      </Tooltip>
+                      <Tooltip text="Delete this job application" position="bottom">
+                        <button onClick={() => deleteJob(job.id)} className="text-xs px-2 py-0.5 rounded border border-transparent text-gray-300 hover:text-red-400">✕</button>
+                      </Tooltip>
                     </div>
                   </div>
                 </div>
@@ -296,12 +312,13 @@ export default function JobTable({ refreshKey, onEdit, onRefresh }) {
 
       {/* Footer */}
       {!loading && (
-        <div className="px-3 py-1.5 border-t border-gray-100 flex items-center justify-between">
+        <div className="flex-shrink-0 px-3 py-1.5 border-t border-gray-100 flex items-center justify-between">
           <p className="text-xs text-gray-400">
             {filtered.length} of {jobs.length} jobs
             {showDupes && <span className="text-orange-500 ml-1">· duplicates only</span>}
           </p>
           {showDupes && (
+            <Tooltip text="Set all duplicate-email jobs to Skip so they won't be scheduled">
             <button
               onClick={async () => {
                 const dupesToSkip = filtered.filter(
@@ -324,6 +341,7 @@ export default function JobTable({ refreshKey, onEdit, onRefresh }) {
             >
               Skip All Dupes
             </button>
+            </Tooltip>
           )}
         </div>
       )}

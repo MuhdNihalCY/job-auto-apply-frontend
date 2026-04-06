@@ -10,133 +10,187 @@ import TestEmailModal from "./components/TestEmailModal.jsx";
 import ResumeUpload from "./components/ResumeUpload.jsx";
 import SettingsPanel from "./components/SettingsPanel.jsx";
 import LoginPage from "./components/LoginPage.jsx";
+import Tooltip from "./components/Tooltip.jsx";
 import { supabase } from "./lib/supabase.js";
 
-const TABS = ["Dashboard", "Settings"];
+const NAV = [
+  { id: "queue",    label: "Queue",    icon: "📬" },
+  { id: "jobs",     label: "Jobs",     icon: "💼" },
+  { id: "settings", label: "Settings", icon: "⚙️" },
+];
 
 export default function App() {
-  const [session, setSession] = useState(undefined);
-  const [tab, setTab] = useState("Dashboard");
-
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [showAdd, setShowAdd] = useState(false);
-  const [editJob, setEditJob] = useState(null);
+  const [session, setSession]           = useState(undefined);
+  const [mobileTab, setMobileTab]       = useState("queue");
+  const [desktopPanel, setDesktopPanel] = useState("jobs"); // "jobs" | "settings"
+  const [refreshKey, setRefreshKey]     = useState(0);
+  const [showAdd, setShowAdd]           = useState(false);
+  const [editJob, setEditJob]           = useState(null);
   const [showTestEmail, setShowTestEmail] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => setSession(data.session));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
     return () => subscription.unsubscribe();
   }, []);
 
-  if (session === undefined) return null; // loading
+  if (session === undefined) return null;
   if (session === null) return <LoginPage />;
 
-  function refresh() {
-    setRefreshKey((k) => k + 1);
-  }
+  function refresh() { setRefreshKey((k) => k + 1); }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4">
-          {/* Top row: logo + tabs */}
-          <div className="flex items-center justify-between py-3">
-            <div className="flex items-center gap-3">
-              <h1 className="text-base font-bold text-gray-900 whitespace-nowrap">✉️ Job Mailer</h1>
-              <nav className="flex gap-1">
-                {TABS.map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setTab(t)}
-                    className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
-                      tab === t
-                        ? "bg-blue-50 text-blue-700"
-                        : "text-gray-600 hover:bg-gray-100"
-                    }`}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </nav>
-            </div>
+    <div className="h-dvh flex flex-col bg-gray-50 overflow-hidden">
 
-            {/* Desktop action buttons */}
-            <div className="hidden sm:flex items-center gap-2">
-              {tab === "Dashboard" && (
-                <>
-                  <SyncNowButton onRefresh={refresh} />
-                  <RunNowButton onRefresh={refresh} />
+      {/* ── Header ─────────────────────────────────────────────────────── */}
+      <header className="flex-shrink-0 bg-white border-b border-gray-200 z-20">
+        <div className="flex items-center justify-between px-3 h-12">
+
+          {/* Logo */}
+          <span className="text-sm font-bold text-gray-900 whitespace-nowrap">✉️ Job Mailer</span>
+
+          {/* Desktop: action buttons */}
+          <div className="hidden lg:flex items-center gap-2">
+            {desktopPanel === "jobs" && (
+              <>
+                <SyncNowButton onRefresh={refresh} compact />
+                <RunNowButton  onRefresh={refresh} compact />
+                <Tooltip text="Send a test email to verify your setup" position="bottom">
                   <button
                     onClick={() => setShowTestEmail(true)}
-                    className="px-3 py-2 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors"
+                    className="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors"
                   >
                     Test Email
                   </button>
+                </Tooltip>
+                <Tooltip text="Add a new job application manually" position="bottom">
                   <button
                     onClick={() => setShowAdd(true)}
-                    className="px-3 py-2 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 transition-colors"
+                    className="px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg hover:bg-gray-800 transition-colors"
                   >
                     + Add Job
                   </button>
-                </>
-              )}
+                </Tooltip>
+              </>
+            )}
+            <Tooltip text={desktopPanel === "settings" ? "Back to job list" : "Configure email provider, templates & sync"} position="bottom">
+              <button
+                onClick={() => setDesktopPanel((p) => p === "settings" ? "jobs" : "settings")}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                  desktopPanel === "settings"
+                    ? "bg-gray-900 text-white border-gray-900"
+                    : "border-gray-200 hover:bg-gray-50 text-gray-600"
+                }`}
+              >
+                ⚙️ Settings
+              </button>
+            </Tooltip>
+            <Tooltip text="Sign out of your account" position="bottom">
               <button
                 onClick={() => supabase.auth.signOut()}
-                className="px-3 py-2 text-sm font-medium rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-500 transition-colors"
+                className="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-500 transition-colors"
+              >
+                Logout
+              </button>
+            </Tooltip>
+          </div>
+
+          {/* Mobile: icon action buttons */}
+          <div className="flex lg:hidden items-center gap-1">
+            <SyncNowButton onRefresh={refresh} compact />
+            <RunNowButton  onRefresh={refresh} compact />
+            <Tooltip text="Add a new job application" position="bottom">
+              <button
+                onClick={() => setShowAdd(true)}
+                className="px-2.5 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg"
+              >
+                +
+              </button>
+            </Tooltip>
+          </div>
+        </div>
+      </header>
+
+      {/* ── Body ───────────────────────────────────────────────────────── */}
+      <div className="flex-1 flex overflow-hidden">
+
+        {/* ── Desktop: Left panel (queue) ─────────────────────────────── */}
+        <aside className="hidden lg:flex flex-col w-[340px] flex-shrink-0 border-r border-gray-200 overflow-y-auto p-3">
+          <StatsBar refreshKey={refreshKey} />
+          <QueuePanel refreshKey={refreshKey} onRefresh={refresh} />
+        </aside>
+
+        {/* ── Desktop: Right panel (jobs or settings) ─────────────────── */}
+        <main className="hidden lg:flex flex-col flex-1 overflow-hidden">
+          {desktopPanel === "jobs" && (
+            <div className="flex flex-col flex-1 overflow-hidden p-3">
+              <JobTable
+                refreshKey={refreshKey}
+                onEdit={(job) => setEditJob(job)}
+                onRefresh={refresh}
+              />
+            </div>
+          )}
+          {desktopPanel === "settings" && (
+            <div className="overflow-y-auto flex-1 p-4 max-w-2xl space-y-4">
+              <ResumeUpload />
+              <SettingsPanel />
+            </div>
+          )}
+        </main>
+
+        {/* ── Mobile: tab content ─────────────────────────────────────── */}
+        <div className="flex lg:hidden flex-col flex-1 overflow-y-auto pb-14">
+          {mobileTab === "queue" && (
+            <div className="p-3">
+              <StatsBar refreshKey={refreshKey} />
+              <QueuePanel refreshKey={refreshKey} onRefresh={refresh} />
+            </div>
+          )}
+
+          {mobileTab === "jobs" && (
+            <div className="p-3 flex flex-col flex-1">
+              <JobTable
+                refreshKey={refreshKey}
+                onEdit={(job) => setEditJob(job)}
+                onRefresh={refresh}
+              />
+            </div>
+          )}
+
+          {mobileTab === "settings" && (
+            <div className="p-3 space-y-4">
+              <ResumeUpload />
+              <SettingsPanel />
+              <button
+                onClick={() => supabase.auth.signOut()}
+                className="w-full py-2.5 text-sm font-medium rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-500 transition-colors"
               >
                 Logout
               </button>
             </div>
-          </div>
-
-          {/* Mobile action buttons row */}
-          {tab === "Dashboard" && (
-            <div className="sm:hidden flex items-center gap-2 pb-3 overflow-x-auto scrollbar-hide">
-              <SyncNowButton onRefresh={refresh} compact />
-              <RunNowButton onRefresh={refresh} compact />
-              <button
-                onClick={() => setShowTestEmail(true)}
-                className="flex-shrink-0 px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600 transition-colors"
-              >
-                Test Email
-              </button>
-              <button
-                onClick={() => setShowAdd(true)}
-                className="flex-shrink-0 px-3 py-1.5 bg-gray-900 text-white text-xs font-medium rounded-lg hover:bg-gray-800 transition-colors"
-              >
-                + Add Job
-              </button>
-            </div>
           )}
         </div>
-      </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-4 sm:py-6">
-        {tab === "Dashboard" && (
-          <>
-            <StatsBar refreshKey={refreshKey} />
-            <QueuePanel refreshKey={refreshKey} onRefresh={refresh} />
-            <JobTable
-              refreshKey={refreshKey}
-              onEdit={(job) => setEditJob(job)}
-              onRefresh={refresh}
-            />
-          </>
-        )}
+      </div>
 
-        {tab === "Settings" && (
-          <div className="space-y-4 max-w-2xl">
-            <ResumeUpload />
-            <SettingsPanel />
-          </div>
-        )}
-      </main>
+      {/* ── Mobile: Bottom nav ─────────────────────────────────────────── */}
+      <nav className="lg:hidden fixed bottom-0 inset-x-0 h-14 bg-white border-t border-gray-200 flex z-20">
+        {NAV.map(({ id, label, icon }) => (
+          <button
+            key={id}
+            onClick={() => setMobileTab(id)}
+            className={`flex-1 flex flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-colors ${
+              mobileTab === id ? "text-blue-600" : "text-gray-400"
+            }`}
+          >
+            <span className="text-base leading-none">{icon}</span>
+            {label}
+          </button>
+        ))}
+      </nav>
 
-      {/* Modals */}
+      {/* ── Modals ─────────────────────────────────────────────────────── */}
       {showAdd && (
         <AddJobModal onClose={() => setShowAdd(false)} onSaved={refresh} />
       )}
