@@ -10,6 +10,9 @@ const PROVIDER_OPTIONS = [
   { value: "brevo", label: "Brevo (Sendinblue)" },
 ];
 
+// Secret keys are never fetched — only existence is checked
+const SECRET_KEYS = ["smtp_pass", "sendgrid_api_key", "resend_api_key", "brevo_api_key"];
+
 const ALL_SETTING_KEYS = [
   "daily_email_limit",
   "delay_min_minutes",
@@ -27,15 +30,15 @@ const ALL_SETTING_KEYS = [
   "smtp_port",
   "smtp_secure",
   "smtp_user",
-  "smtp_pass",
-  "sendgrid_api_key",
-  "resend_api_key",
-  "brevo_api_key",
   "last_synced_at",
 ];
 
 export default function SettingsPanel() {
   const [settings, setSettings] = useState({});
+  // tracks which secret keys are already saved in DB (never holds the actual value)
+  const [savedSecrets, setSavedSecrets] = useState({});
+  // holds new values the user is currently typing for secret fields
+  const [pendingSecrets, setPendingSecrets] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -47,14 +50,19 @@ export default function SettingsPanel() {
 
   async function load() {
     setLoading(true);
-    const { data } = await supabase
-      .from("app_settings")
-      .select("key, value")
-      .in("key", ALL_SETTING_KEYS);
+    const [{ data: settingsData }, { data: secretsData }] = await Promise.all([
+      supabase.from("app_settings").select("key, value").in("key", ALL_SETTING_KEYS),
+      supabase.from("app_settings").select("key, value").in("key", SECRET_KEYS),
+    ]);
 
     const map = {};
-    for (const row of data ?? []) map[row.key] = row.value;
+    for (const row of settingsData ?? []) map[row.key] = row.value;
     setSettings(map);
+
+    const saved = {};
+    for (const row of secretsData ?? []) saved[row.key] = !!row.value;
+    setSavedSecrets(saved);
+
     setLoading(false);
   }
 
@@ -62,33 +70,59 @@ export default function SettingsPanel() {
     setSettings((s) => ({ ...s, [key]: value }));
   }
 
+  function setSecret(key, value) {
+    setPendingSecrets((s) => ({ ...s, [key]: value }));
+  }
+
   async function save(keys) {
     setSaving(true);
-    const upserts = keys.map((k) => ({ key: k, value: settings[k] ?? "" }));
+    const regularKeys = keys.filter((k) => !SECRET_KEYS.includes(k));
+    const secretKeys = keys.filter((k) => SECRET_KEYS.includes(k));
+
+    const upserts = regularKeys.map((k) => ({ key: k, value: settings[k] ?? "" }));
+
+    // Only save a secret if the user actually typed a new value
+    for (const k of secretKeys) {
+      if (pendingSecrets[k]) {
+        upserts.push({ key: k, value: pendingSecrets[k] });
+      }
+    }
+
     const { error } = await supabase.from("app_settings").upsert(upserts);
     setSaving(false);
-    if (error) toast.error("Save failed: " + error.message);
-    else toast.success("Settings saved!");
+    if (error) {
+      toast.error("Save failed: " + error.message);
+    } else {
+      toast.success("Settings saved!");
+      // Mark saved secrets as saved and clear pending
+      const newSaved = { ...savedSecrets };
+      for (const k of secretKeys) {
+        if (pendingSecrets[k]) newSaved[k] = true;
+      }
+      setSavedSecrets(newSaved);
+      setPendingSecrets((p) => {
+        const next = { ...p };
+        for (const k of secretKeys) delete next[k];
+        return next;
+      });
+    }
   }
 
   async function testConnection() {
     setTesting(true);
     try {
-      // Save current provider settings first
       await save(providerKeys(settings["email_provider"]));
-      // Invoke process-queue with a test flag (no actual email sent — just auth check)
-      // We call schedule-emails with a dry-run body flag if supported, otherwise just verify settings exist
       const provider = settings["email_provider"] || "gmail";
       const missing = [];
       if (provider === "gmail" || provider === "smtp") {
         if (!settings["smtp_user"]) missing.push("SMTP User");
-        if (!settings["smtp_pass"]) missing.push("SMTP Password");
+        if (!savedSecrets["smtp_pass"] && !pendingSecrets["smtp_pass"]) missing.push("SMTP Password");
       } else if (provider === "sendgrid") {
-        if (!settings["sendgrid_api_key"]) missing.push("SendGrid API Key");
+        if (!savedSecrets["sendgrid_api_key"] && !pendingSecrets["sendgrid_api_key"]) missing.push("SendGrid API Key");
       } else if (provider === "resend") {
-        if (!settings["resend_api_key"]) missing.push("Resend API Key");
+        if (!savedSecrets["resend_api_key"] && !pendingSecrets["resend_api_key"]) missing.push("Resend API Key");
       } else if (provider === "brevo") {
-        if (!settings["brevo_api_key"]) missing.push("Brevo API Key");
+        if (!savedSecrets["brevo_api_key"] && !pendingSecrets["brevo_api_key"]) missing.push("Brevo API Key");
       }
 
       if (missing.length > 0) {
@@ -225,11 +259,11 @@ export default function SettingsPanel() {
                     onChange={(v) => set("smtp_user", v)}
                     type="email"
                   />
-                  <Sfield
+                  <SecretField
                     label={provider === "gmail" ? "App Password" : "SMTP Password"}
-                    value={settings["smtp_pass"] ?? ""}
-                    onChange={(v) => set("smtp_pass", v)}
-                    type="password"
+                    isSaved={savedSecrets["smtp_pass"]}
+                    value={pendingSecrets["smtp_pass"] ?? ""}
+                    onChange={(v) => setSecret("smtp_pass", v)}
                     hint={provider === "gmail" ? "16-char app password from Google Account → Security" : ""}
                   />
                 </div>
@@ -237,31 +271,31 @@ export default function SettingsPanel() {
             )}
 
             {provider === "sendgrid" && (
-              <Sfield
+              <SecretField
                 label="SendGrid API Key"
-                value={settings["sendgrid_api_key"] ?? ""}
-                onChange={(v) => set("sendgrid_api_key", v)}
-                type="password"
+                isSaved={savedSecrets["sendgrid_api_key"]}
+                value={pendingSecrets["sendgrid_api_key"] ?? ""}
+                onChange={(v) => setSecret("sendgrid_api_key", v)}
                 hint="Free tier: 100 emails/day"
               />
             )}
 
             {provider === "resend" && (
-              <Sfield
+              <SecretField
                 label="Resend API Key"
-                value={settings["resend_api_key"] ?? ""}
-                onChange={(v) => set("resend_api_key", v)}
-                type="password"
+                isSaved={savedSecrets["resend_api_key"]}
+                value={pendingSecrets["resend_api_key"] ?? ""}
+                onChange={(v) => setSecret("resend_api_key", v)}
                 hint="Free tier: 100 emails/day, 3000/month"
               />
             )}
 
             {provider === "brevo" && (
-              <Sfield
+              <SecretField
                 label="Brevo API Key"
-                value={settings["brevo_api_key"] ?? ""}
-                onChange={(v) => set("brevo_api_key", v)}
-                type="password"
+                isSaved={savedSecrets["brevo_api_key"]}
+                value={pendingSecrets["brevo_api_key"] ?? ""}
+                onChange={(v) => setSecret("brevo_api_key", v)}
                 hint="Free tier: 300 emails/day"
               />
             )}
@@ -467,6 +501,25 @@ function Sfield({ label, value, onChange, type = "text", hint }) {
         onChange={(e) => onChange(e.target.value)}
         className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
+      {hint && <p className="text-xs text-gray-400 mt-1">{hint}</p>}
+    </div>
+  );
+}
+
+function SecretField({ label, isSaved, value, onChange, hint }) {
+  return (
+    <div>
+      <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
+      <input
+        type="password"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={isSaved ? "Saved — enter new value to change" : ""}
+        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+      {isSaved && !value && (
+        <p className="text-xs text-green-600 mt-1">Saved securely. Not shown for security.</p>
+      )}
       {hint && <p className="text-xs text-gray-400 mt-1">{hint}</p>}
     </div>
   );
