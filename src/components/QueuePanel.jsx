@@ -49,7 +49,7 @@ export default function QueuePanel({ refreshKey, onRefresh }) {
         .from("send_queue")
         .select(`
           id, scheduled_at, sent_at, status, error_message,
-          job_applications ( company_name, role, apply_email )
+          job_applications ( id, company_name, role, apply_email )
         `)
         .gte("scheduled_at", today.toISOString())
         .order("scheduled_at", { ascending: true });
