@@ -31,7 +31,26 @@ const ALL_SETTING_KEYS = [
   "smtp_secure",
   "smtp_user",
   "last_synced_at",
+  "sheets_enabled",
+  "email_template",
 ];
+
+const DEFAULT_EMAIL_TEMPLATE = `Dear Hiring Team,
+
+I came across the {role} opening at {company} and would like to express my strong interest in this position.
+
+I am a full-stack developer with hands-on experience in {skills}. Over the past {exp}, I have built and maintained scalable web applications — from designing RESTful APIs and database schemas on the backend to crafting responsive, user-friendly interfaces on the frontend.
+
+My core stack includes MongoDB, Express.js, React, and Node.js (MERN), and I am comfortable working across the full development lifecycle — requirements, architecture, implementation, testing, and deployment.
+
+I am confident my background aligns well with what {company} is looking for, and I am excited about the opportunity to contribute to your team.
+
+Please find my resume attached. I would love to connect and discuss further.
+
+Thank you for your time and consideration.
+
+Best regards,
+{name}`;
 
 export default function SettingsPanel() {
   const [settings, setSettings] = useState({});
@@ -159,6 +178,7 @@ export default function SettingsPanel() {
   const tabs = [
     { key: "provider", label: "Email Provider" },
     { key: "rules", label: "Sending Rules" },
+    { key: "template", label: "Email Template" },
     { key: "sync", label: "Sheets Sync" },
     { key: "server", label: "Server" },
   ];
@@ -420,13 +440,84 @@ export default function SettingsPanel() {
           </>
         )}
 
+        {/* Email Template Tab */}
+        {activeTab === "template" && (
+          <>
+            <div className="space-y-3">
+              <p className="text-sm text-gray-600">
+                This template is used when you click <strong>"Generate from Template"</strong> in the Add/Edit job modal.
+                Placeholders are replaced with the job's actual values.
+              </p>
+              <div className="p-3 bg-gray-50 rounded-lg text-xs text-gray-600 space-y-1">
+                <p className="font-semibold text-gray-700 mb-1">Available placeholders:</p>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
+                  <span><code className="bg-white px-1 rounded border">{"{company}"}</code> — Company name</span>
+                  <span><code className="bg-white px-1 rounded border">{"{role}"}</code> — Job title</span>
+                  <span><code className="bg-white px-1 rounded border">{"{skills}"}</code> — Key skills</span>
+                  <span><code className="bg-white px-1 rounded border">{"{exp}"}</code> — Experience required</span>
+                  <span><code className="bg-white px-1 rounded border">{"{name}"}</code> — Your name (from_name)</span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Template</label>
+                <textarea
+                  value={settings["email_template"] ?? DEFAULT_EMAIL_TEMPLATE}
+                  onChange={(e) => set("email_template", e.target.value)}
+                  rows={16}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => save(["email_template"])}
+                  disabled={saving}
+                  className="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {saving ? "Saving…" : "Save Template"}
+                </button>
+                <button
+                  onClick={() => set("email_template", DEFAULT_EMAIL_TEMPLATE)}
+                  className="px-4 py-2 text-sm rounded-lg border border-gray-200 hover:bg-gray-50 text-gray-600"
+                >
+                  Reset to Default
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
         {/* Sheets Sync Tab */}
         {activeTab === "sync" && (
           <>
-            <div className="text-sm text-gray-600 space-y-2">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div>
+                  <p className="text-sm font-medium text-gray-800">Enable Sheets Sync</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Auto-sync every 30 min + manual Sync button</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={settings["sheets_enabled"] !== "false"}
+                    onChange={(e) => set("sheets_enabled", e.target.checked ? "true" : "false")}
+                    className="sr-only peer"
+                  />
+                  <div className="w-10 h-6 bg-gray-200 peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:bg-blue-600 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-4" />
+                </label>
+              </div>
+              <button
+                onClick={() => save(["sheets_enabled"])}
+                disabled={saving}
+                className="px-4 py-2 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                {saving ? "Saving…" : "Save"}
+              </button>
+            </div>
+            <div className="text-sm text-gray-600 space-y-2 mt-2">
               <p>
-                The Node.js backend syncs from Google Sheets every 30 minutes automatically.
-                You can also trigger a sync manually from the dashboard.
+                <strong>Note:</strong> To fully disable the backend cron, also set{" "}
+                <code className="text-xs bg-gray-100 px-1 py-0.5 rounded">DISABLE_SHEETS_SYNC=true</code>{" "}
+                in your Render environment variables.
               </p>
               <p>
                 <strong>Spreadsheet ID:</strong>{" "}
