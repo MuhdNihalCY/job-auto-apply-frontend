@@ -3,6 +3,7 @@ import { supabase } from "../lib/supabase.js";
 import toast from "react-hot-toast";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+const ANON_KEY    = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export default function SyncNowButton({ onRefresh, compact = false }) {
   const [loading, setLoading] = useState(false);
@@ -26,7 +27,10 @@ export default function SyncNowButton({ onRefresh, compact = false }) {
     }
     setLoading(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/api/sync-now`, { method: "POST" });
+      const res = await fetch(`${BACKEND_URL}/sync-from-sheets`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${ANON_KEY}` },
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Request failed");
       toast.success(

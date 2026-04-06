@@ -2,6 +2,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+const ANON_KEY    = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export default function RunNowButton({ onRefresh, compact = false }) {
   const [loading, setLoading] = useState(false);
@@ -13,7 +14,11 @@ export default function RunNowButton({ onRefresh, compact = false }) {
     }
     setLoading(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/api/run-now`, { method: "POST" });
+      const res = await fetch(`${BACKEND_URL}/schedule-emails`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${ANON_KEY}` },
+        body: JSON.stringify({ forceReschedule: true }),
+      });
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.error || "Request failed");

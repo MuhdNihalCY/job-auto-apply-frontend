@@ -3,6 +3,7 @@ import { supabase } from "../lib/supabase.js";
 import toast from "react-hot-toast";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+const ANON_KEY    = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export default function TestEmailModal({ onClose }) {
   const [jobs, setJobs] = useState([]);
@@ -43,9 +44,9 @@ export default function TestEmailModal({ onClose }) {
     }
     setSending(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/api/send-test`, {
+      const res = await fetch(`${BACKEND_URL}/send-test`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${ANON_KEY}` },
         body: JSON.stringify({ job_id: Number(selectedId), test_email: testEmail.trim() }),
       });
       const data = await res.json();

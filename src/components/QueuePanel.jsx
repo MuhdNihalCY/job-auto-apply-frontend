@@ -3,6 +3,7 @@ import { supabase } from "../lib/supabase.js";
 import toast from "react-hot-toast";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+const ANON_KEY    = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 const statusStyle = {
   queued: "bg-blue-100 text-blue-700",
@@ -27,7 +28,11 @@ export default function QueuePanel({ refreshKey, onRefresh }) {
   async function retry(jobId) {
     setRetrying(jobId);
     try {
-      const res = await fetch(`${BACKEND_URL}/api/retry/${jobId}`, { method: "POST" });
+      const res = await fetch(`${BACKEND_URL}/retry`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${ANON_KEY}` },
+        body: JSON.stringify({ job_id: jobId }),
+      });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error);
       toast.success("Job reset to Pending — will be scheduled on next Run Now");
