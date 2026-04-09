@@ -2,9 +2,6 @@ import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase.js";
 import toast from "react-hot-toast";
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
-const ANON_KEY    = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
 export default function TestEmailModal({ onClose }) {
   const [jobs, setJobs] = useState([]);
   const [selectedId, setSelectedId] = useState("");
@@ -44,13 +41,11 @@ export default function TestEmailModal({ onClose }) {
     }
     setSending(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/send-test`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${ANON_KEY}` },
-        body: JSON.stringify({ job_id: Number(selectedId), test_email: testEmail.trim() }),
+      const { data, error } = await supabase.functions.invoke("send-test", {
+        body: { job_id: Number(selectedId), test_email: testEmail.trim() },
       });
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error || "Send failed");
+      if (error) throw new Error(error.message);
+      if (!data?.ok) throw new Error(data?.error || "Send failed");
       toast.success(`Test email sent to ${testEmail}`);
       onClose();
     } catch (err) {
