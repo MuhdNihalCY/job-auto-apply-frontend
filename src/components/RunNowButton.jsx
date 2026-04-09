@@ -1,37 +1,27 @@
 import { useState } from "react";
+import { supabase } from "../lib/supabase.js";
 import toast from "react-hot-toast";
 import Tooltip from "./Tooltip.jsx";
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
-const ANON_KEY    = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export default function RunNowButton({ onRefresh, compact = false }) {
   const [loading, setLoading] = useState(false);
 
   async function run() {
-    if (!BACKEND_URL) {
-      toast.error("VITE_BACKEND_URL is not set in .env");
-      return;
-    }
     setLoading(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/schedule-emails`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${ANON_KEY}` },
-        body: JSON.stringify({ forceReschedule: true }),
+      const { data, error } = await supabase.functions.invoke("schedule-emails", {
+        body: { forceReschedule: true },
       });
-      const data = await res.json();
+      if (error) throw new Error(error.message);
 
-      if (!res.ok) throw new Error(data.error || "Request failed");
-
-      if (data.scheduled === 0) {
+      if (data?.scheduled === 0) {
         toast("No pending jobs to schedule. Add jobs with an email and personalized body.", {
           icon: "ℹ️",
         });
-      } else if (data.alreadyScheduled) {
+      } else if (data?.alreadyScheduled) {
         toast(`Queue already set for today (${data.count} emails pending).`, { icon: "ℹ️" });
       } else {
-        toast.success(`Scheduled ${data.scheduled} email(s)! First send in ≤5 min.`);
+        toast.success(`Scheduled ${data?.scheduled} email(s)! First send in ≤5 min.`);
       }
       onRefresh();
     } catch (err) {

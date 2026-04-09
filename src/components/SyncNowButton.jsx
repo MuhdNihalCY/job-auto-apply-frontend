@@ -3,9 +3,6 @@ import { supabase } from "../lib/supabase.js";
 import toast from "react-hot-toast";
 import Tooltip from "./Tooltip.jsx";
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
-const ANON_KEY    = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
 export default function SyncNowButton({ onRefresh, compact = false }) {
   const [loading, setLoading] = useState(false);
   const [sheetsEnabled, setSheetsEnabled] = useState(true);
@@ -15,27 +12,19 @@ export default function SyncNowButton({ onRefresh, compact = false }) {
       .from("app_settings")
       .select("value")
       .eq("key", "sheets_enabled")
-      .single()
+      .maybeSingle()
       .then(({ data }) => {
         if (data) setSheetsEnabled(data.value !== "false");
       });
   }, []);
 
   async function sync() {
-    if (!BACKEND_URL) {
-      toast.error("VITE_BACKEND_URL is not set in .env");
-      return;
-    }
     setLoading(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/sync-from-sheets`, {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${ANON_KEY}` },
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Request failed");
+      const { data, error } = await supabase.functions.invoke("sync-from-sheets");
+      if (error) throw new Error(error.message);
       toast.success(
-        `Sync complete — ${data.inserted ?? 0} inserted, ${data.updated ?? 0} updated`
+        `Sync complete — ${data?.inserted ?? 0} inserted, ${data?.updated ?? 0} updated`
       );
       onRefresh();
     } catch (err) {
